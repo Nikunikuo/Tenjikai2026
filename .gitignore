@@ -39,3 +39,12 @@ next-env.d.ts
 /dist-local/
 /.runtime/
 *.tsbuildinfo
+
+# Exhibition videos remain local to each device.
+*.mp4
+*.webm
+*.mov
+*.m4v
+*.mkv
+*.avi
+*.ogv

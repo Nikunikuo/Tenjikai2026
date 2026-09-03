@@ -1,17 +1,15 @@
 /* oxlint-disable jsx-a11y/media-has-caption -- Playback uses arbitrary local user videos; the app has no transcript to attach. */
 'use client';
 
-import { useRef, useState, type CSSProperties } from 'react';
+import { useRef, useState } from 'react';
 import {
   ArrowDown,
   ArrowUp,
   ArrowUpRight,
   Check,
-  ChevronLeft,
   ChevronRight,
   Film,
   FolderOpen,
-  Hand,
   Infinity as InfinityIcon,
   Maximize,
   Pause,
@@ -28,15 +26,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { usePlayer, formatTime } from '@/hooks/use-player';
-import { useGestures } from '@/hooks/use-gestures';
 import { usePlayerTools } from '@/hooks/use-player-tools';
 
 export default function Home() {
   const { video: videoRef, stage: stageRef, ...p } = usePlayer();
-  const { cameraVideo: cameraRef, ...g } = useGestures((action) => {
-    if (action === 'toggle') p.toggle();
-    else p.step(action === 'next' ? 1 : -1);
-  });
   usePlayerTools({ clips: p.clips, active: p.active, playing: p.playing });
   const input = useRef<HTMLInputElement>(null);
   const folder = useRef<HTMLInputElement>(null);
@@ -139,50 +132,6 @@ export default function Home() {
                 <InfinityIcon size={16} /> LOOP ALL
               </span>
             </div>
-            {g.status === 'on' && g.feedback.x !== undefined && (
-              <div
-                className="air-cursor"
-                style={
-                  {
-                    left: `${g.feedback.x * 100}%`,
-                    top: `${(g.feedback.y ?? 0.5) * 100}%`,
-                    '--progress': `${g.feedback.progress * 360}deg`,
-                  } as CSSProperties
-                }
-              >
-                <span />
-              </div>
-            )}
-            {g.status === 'on' && (
-              <div className="air-hint">
-                <Hand size={12} />
-                {g.feedback.hint}
-              </div>
-            )}
-            {g.status === 'on' && g.effect && (
-              <div key={g.effect.id} className="gesture-toast">
-                {g.effect.action === 'next' ? (
-                  <SkipForward />
-                ) : g.effect.action === 'previous' ? (
-                  <SkipBack />
-                ) : p.playing ? (
-                  <Play />
-                ) : (
-                  <Pause />
-                )}
-                <span>
-                  {!p.currentClip
-                    ? '動画を追加すると操作できます'
-                    : g.effect.action === 'next'
-                      ? 'NEXT FILM'
-                      : g.effect.action === 'previous'
-                        ? 'PREVIOUS FILM'
-                        : p.playing
-                          ? 'PLAY'
-                          : 'PAUSE'}
-                </span>
-              </div>
-            )}
             {p.currentClip && (
               <div className="screen-bottom">
                 <span>
@@ -445,75 +394,6 @@ export default function Home() {
           </p>
         </aside>
       </div>
-      <section className="gesture-panel">
-        <div className="gesture-intro">
-          <span className="gesture-icon">
-            <Hand size={22} />
-          </span>
-          <div>
-            <p className="eyebrow">A LITTLE MAGIC</p>
-            <h2>触れずに、あやつる。</h2>
-            <p>手を映すと、光のカーソルがついてくる。</p>
-          </div>
-        </div>
-        <div className="gesture-how">
-          <span>
-            <Hand size={22} />
-            <strong>つまんでキープ</strong>
-            <small>0.75 秒で再生 / 停止</small>
-          </span>
-          <span>
-            <ChevronLeft size={22} />
-            <strong>左へスワイプ</strong>
-            <small>手をひらいて、次の動画</small>
-          </span>
-          <span>
-            <ChevronRight size={22} />
-            <strong>右へスワイプ</strong>
-            <small>手をひらいて、前の動画</small>
-          </span>
-        </div>
-        <div className="gesture-enable">
-          <Button
-            className={`outline-button ${g.status === 'on' ? 'camera-on' : ''}`}
-            variant="outline"
-            onClick={
-              g.status === 'on' || g.status === 'loading' ? g.stop : g.start
-            }
-          >
-            <Hand size={15} />
-            {g.status === 'on'
-              ? '空中操作をオフ'
-              : g.status === 'loading'
-                ? '準備中 · キャンセル'
-                : '空中操作をオン'}
-          </Button>
-          <small>カメラはオンにしたときだけ使用</small>
-        </div>
-      </section>
-      <section
-        className={`camera-panel ${g.status === 'off' ? 'camera-hidden' : ''}`}
-        aria-label="カメラと手の認識状態"
-      >
-        <div className="camera-preview">
-          <video ref={cameraRef} muted playsInline className="camera-video" />
-          <span>
-            <i className={g.status === 'on' ? 'status-dot' : 'idle-dot'} />
-            {g.status === 'on' ? 'CAMERA LIVE' : 'CAMERA'}
-          </span>
-        </div>
-        <div>
-          <p className="eyebrow">GESTURE STUDIO</p>
-          <output className="camera-status">{g.feedback.hint}</output>
-          <p>
-            片手だけを、明るい場所でカメラに映してください。操作のあとは手を一度下ろすと、次の操作ができます。
-          </p>
-          <p>
-            つまむ：親指と人差し指を合わせる ／ スワイプ：手をひらいて横へ払う
-          </p>
-          <small>カメラ映像の録画・アップロードは行いません。</small>
-        </div>
-      </section>
       <div className="session-help">
         <span>
           <span className="keyboard-key">Space</span> 再生 / 停止{' '}

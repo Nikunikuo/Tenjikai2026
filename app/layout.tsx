@@ -3,7 +3,7 @@ import './globals.css';
 const pageMetadata: Metadata = {
   title: 'AIR LOOP — 展示会のための動画プレイヤー',
   description:
-    'ローカル動画を、好きな順番でずっと。連続ループと空中操作で楽しむ展示用プレイヤー。',
+    'ローカル動画を、好きな順番でずっと。シンプルな操作で使える展示用の連続再生プレイヤー。',
   openGraph: {
     title: 'AIR LOOP',
     description:
@@ -20,7 +20,7 @@ const pageMetadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'AIR LOOP',
-    description: '展示会のための連続ループ・空中操作プレイヤー',
+    description: '展示会のための連続ループ動画プレイヤー',
     images: ['/og.png'],
   },
 };
