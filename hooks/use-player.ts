@@ -61,6 +61,7 @@ export function usePlayer() {
   }, [active, clips]);
   const current = clips.find((c) => c.id === active);
   const index = clips.findIndex((c) => c.id === active);
+  const hasClips = clips.length > 0;
   useEffect(() => {
     const owned = urls.current;
     return () => owned.forEach((url) => URL.revokeObjectURL(url));
@@ -145,7 +146,7 @@ export function usePlayer() {
     const show = () => {
       setControlsVisible(true);
       clearTimeout(timer);
-      if (playing) timer = setTimeout(() => setControlsVisible(false), 3500);
+      timer = setTimeout(() => setControlsVisible(false), 3500);
     };
     show();
     const node = stage.current;
@@ -158,7 +159,7 @@ export function usePlayer() {
       node?.removeEventListener('pointerdown', show);
       node?.removeEventListener('focusin', show);
     };
-  }, [playing, active]);
+  }, [hasClips]);
   const addFiles = (files: FileList | File[]) => {
     if (state.current.locked) {
       setNotice('展示ロックを解除すると動画を追加できます。');
@@ -377,6 +378,8 @@ export function usePlayer() {
     const key = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (
+        e.defaultPrevented ||
+        target.closest('#visitor-works') ||
         target.matches('input,textarea,select,button') ||
         target.isContentEditable ||
         e.ctrlKey ||

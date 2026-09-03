@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { VisitorControls } from '@/components/visitor-controls';
 import { usePlayer, formatTime } from '@/hooks/use-player';
 import { usePlayerTools } from '@/hooks/use-player-tools';
 
@@ -77,13 +78,15 @@ export default function Home() {
         <section className="player-column">
           <div
             ref={stageRef}
-            className={`screen ${dragging ? 'is-dragging' : ''} ${!p.controlsVisible && p.playing ? 'hide-controls' : ''}`}
+            className={`screen ${dragging ? 'is-dragging' : ''} ${!p.controlsVisible && p.currentClip ? 'hide-controls' : ''}`}
             onDragOver={(e) => {
+              if (!e.dataTransfer.types.includes('Files')) return;
               e.preventDefault();
               setDragging(true);
             }}
             onDragLeave={() => setDragging(false)}
             onDrop={(e) => {
+              if (!e.dataTransfer.types.includes('Files')) return;
               e.preventDefault();
               setDragging(false);
               p.addFiles(e.dataTransfer.files);
@@ -166,6 +169,14 @@ export default function Home() {
                   <Maximize />
                 </Button>
               </div>
+            )}
+            {p.currentClip && (
+              <VisitorControls
+                clips={p.clips}
+                active={p.active}
+                playing={p.playing}
+                onSelect={p.select}
+              />
             )}
             {dragging && (
               <div className="drop-overlay">
