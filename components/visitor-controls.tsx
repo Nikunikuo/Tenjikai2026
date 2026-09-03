@@ -61,6 +61,7 @@ export function VisitorControls({ clips, active, playing, onSelect }: Props) {
       ? active
       : ids[0];
   const selectedClip = clips.find((clip) => clip.id === selected);
+  const selectedIsCurrent = selectedClip?.id === active && !selectedClip.failed;
   const slots = workSlots(ids, selected);
 
   const release = () => {
@@ -129,8 +130,16 @@ export function VisitorControls({ clips, active, playing, onSelect }: Props) {
     touch();
   };
   const choose = (event: MouseEvent<HTMLButtonElement>, clip: Clip) => {
-    pulse(event, clip.failed ? 'もう一度、再生を試みます' : '上映をはじめます');
-    onSelect(clip.id);
+    const keepCurrent = clip.id === active && !clip.failed;
+    pulse(
+      event,
+      keepCurrent
+        ? 'そのまま上映に戻ります'
+        : clip.failed
+          ? 'もう一度、再生を試みます'
+          : '上映をはじめます',
+    );
+    if (!keepCurrent) onSelect(clip.id);
     close();
   };
   const pointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -331,13 +340,14 @@ export function VisitorControls({ clips, active, playing, onSelect }: Props) {
                     />
                   );
                 const index = ids.indexOf(clip.id);
+                const isCurrent = clip.id === active && !clip.failed;
                 return (
                   <Button
                     key={clip.id}
                     variant="outline"
                     className={`work-card ${slot === 1 ? 'is-selected' : ''} ${clip.failed ? 'is-unavailable' : ''}`}
                     onClick={(event) => choose(event, clip)}
-                    aria-label={`${index + 1}. ${clip.name} を${clip.failed ? '再試行' : '再生'}`}
+                    aria-label={`${index + 1}. ${clip.name} を${clip.failed ? '再試行' : isCurrent ? '現在の状態のまま上映画面へ戻る' : '再生'}`}
                     aria-current={clip.id === active ? 'true' : undefined}
                   >
                     <span className="work-topline">
@@ -345,8 +355,10 @@ export function VisitorControls({ clips, active, playing, onSelect }: Props) {
                       <span>
                         {clip.failed
                           ? '再生できません'
-                          : clip.id === active && playing
-                            ? '上映中'
+                          : clip.id === active
+                            ? playing
+                              ? '上映中'
+                              : '一時停止中'
                             : 'LOCAL FILM'}
                       </span>
                     </span>
@@ -356,7 +368,11 @@ export function VisitorControls({ clips, active, playing, onSelect }: Props) {
                     <strong>{clip.name.replace(/\.[^.]+$/, '')}</strong>
                     <span className="work-cta">
                       <Play size={14} fill="currentColor" />
-                      {clip.failed ? 'タッチして再試行' : 'タッチして再生'}
+                      {clip.failed
+                        ? 'タッチして再試行'
+                        : isCurrent
+                          ? 'タッチして戻る'
+                          : 'タッチして再生'}
                     </span>
                   </Button>
                 );
@@ -386,7 +402,7 @@ export function VisitorControls({ clips, active, playing, onSelect }: Props) {
             >
               <Play size={22} fill="currentColor" />
               <span>
-                この作品を再生
+                {selectedIsCurrent ? '現在のまま上映へ戻る' : 'この作品を再生'}
                 <small>
                   {String(ids.indexOf(selected ?? '') + 1).padStart(2, '0')} /{' '}
                   {String(clips.length).padStart(2, '0')}
