@@ -1,0 +1,10 @@
+MediaPipe Tasks Vision 1.0.1
+Copyright Google LLC. Distributed under the Apache License, Version 2.0.
+Package: https://www.npmjs.com/package/@mediapipe/tasks-vision
+Source: https://github.com/google-ai-edge/mediapipe
+The wasm directory is copied unchanged from the pinned npm package.
+
+Gesture Recognizer model, float16, version 1:
+https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task
+Documentation: https://developers.google.com/edge/mediapipe/solutions/vision/gesture_recognizer
+Privacy notice: https://goo.gle/mediapipe-privacy
