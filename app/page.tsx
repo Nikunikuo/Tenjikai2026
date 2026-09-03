@@ -15,7 +15,6 @@ import {
   Pause,
   Play,
   Plus,
-  Radio,
   ShieldCheck,
   SkipBack,
   SkipForward,
@@ -40,40 +39,29 @@ export default function Home() {
       <header className="topbar">
         <div className="brand" aria-label="AIR LOOP">
           <span className="brand-icon">
-            <InfinityIcon size={27} />
+            <InfinityIcon size={17} />
           </span>
           <span>
             AIR<span className="brand-light">LOOP</span>
-            <small>EXHIBITION PLAYER</small>
+            <small>EXHIBITION</small>
           </span>
         </div>
-        <span className="header-center">
-          <i className="status-dot" />
-          YOUR SPACE. YOUR SCREEN.
-        </span>
         <div className="header-actions">
           <span className="local-badge">
-            <ShieldCheck size={14} /> ローカル再生
+            <ShieldCheck size={12} /> LOCAL
+            <i className={p.playing ? 'status-dot' : 'idle-dot'} />
           </span>
           <Button
-            className="outline-button"
+            className="outline-button header-fullscreen"
             variant="outline"
+            size="icon"
             onClick={p.fullscreen}
+            aria-label="全画面で上映"
           >
-            <Maximize size={15} />
-            全画面
+            <Maximize size={14} />
           </Button>
         </div>
       </header>
-      <section className="workspace-heading">
-        <div>
-          <p className="eyebrow">THE SCREEN IS YOURS</p>
-          <h1>好きな映像を、途切れない体験に。</h1>
-        </div>
-        <span className="session-tag">
-          <Radio size={14} /> EXHIBITION SESSION
-        </span>
-      </section>
       <div className="workspace">
         <section className="player-column">
           <div
@@ -135,74 +123,7 @@ export default function Home() {
                 <InfinityIcon size={16} /> LOOP ALL
               </span>
             </div>
-            {p.currentClip && (
-              <div className="screen-bottom">
-                <span>
-                  {String(p.index + 1).padStart(2, '0')}{' '}
-                  <span className="muted-text">
-                    / {String(p.clips.length).padStart(2, '0')}
-                  </span>
-                </span>
-                <strong>{p.currentClip.name.replace(/\.[^.]+$/, '')}</strong>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={p.toggle}
-                  aria-label={p.playing ? '一時停止' : '再生'}
-                >
-                  {p.playing ? <Pause /> : <Play />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => p.step(1)}
-                  aria-label="次の動画"
-                >
-                  <SkipForward />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={p.fullscreen}
-                  aria-label="全画面を切り替え"
-                >
-                  <Maximize />
-                </Button>
-              </div>
-            )}
-            {p.currentClip && (
-              <VisitorControls
-                clips={p.clips}
-                active={p.active}
-                playing={p.playing}
-                onSelect={p.select}
-              />
-            )}
-            {dragging && (
-              <div className="drop-overlay">
-                <Plus size={40} />
-                {p.locked
-                  ? '展示ロックを解除して追加'
-                  : 'ここにドロップして追加'}
-              </div>
-            )}
-          </div>
-          <div className="transport">
-            <div className="seek-row">
-              <span>{formatTime(p.position)}</span>
-              <input
-                type="range"
-                aria-label="再生位置"
-                min="0"
-                max={p.duration || 1}
-                value={Math.min(p.position, p.duration || 1)}
-                step="0.1"
-                disabled={!p.currentClip}
-                onChange={(e) => p.seek(Number(e.target.value))}
-              />
-              <span>{formatTime(p.duration)}</span>
-            </div>
-            <div className="controls-row">
+            <div className="transport">
               <div className="volume-control">
                 <Button
                   variant="ghost"
@@ -224,6 +145,21 @@ export default function Home() {
                     p.setMuted(false);
                   }}
                 />
+              </div>
+              <div className="seek-row">
+                <input
+                  type="range"
+                  aria-label="再生位置"
+                  min="0"
+                  max={p.duration || 1}
+                  value={Math.min(p.position, p.duration || 1)}
+                  step="0.1"
+                  disabled={!p.currentClip}
+                  onChange={(e) => p.seek(Number(e.target.value))}
+                />
+                <span>
+                  {formatTime(p.position)} / {formatTime(p.duration)}
+                </span>
               </div>
               <div className="play-controls">
                 <Button
@@ -261,33 +197,50 @@ export default function Home() {
                 className="fit-button"
                 variant="ghost"
                 onClick={() => p.setFit(!p.fit)}
+                aria-label={p.fit ? '映像全体を表示' : '画面いっぱいに拡大'}
               >
-                {p.fit ? '画面を埋める' : '全体を表示'}{' '}
-                <ChevronRight size={12} />
+                {p.fit ? '全体' : '拡大'} <ChevronRight size={11} />
+              </Button>
+              <Button
+                className="stage-fullscreen"
+                variant="ghost"
+                size="icon"
+                onClick={p.fullscreen}
+                aria-label="全画面を切り替える"
+              >
+                <Maximize size={14} />
               </Button>
             </div>
-          </div>
-          <div className="now-row">
-            <span>
-              <InfinityIcon size={16} />{' '}
-              最後の動画が終わると、先頭から繰り返します
-            </span>
-            <span>
-              {p.clips.length
-                ? `${p.clips.length} VIDEOS IN LOOP`
-                : 'NO VIDEO YET'}
-            </span>
+            {p.currentClip && !p.controlsVisible && (
+              <button
+                className="transport-wake"
+                type="button"
+                aria-label="再生操作を表示"
+              />
+            )}
+            {p.currentClip && (
+              <VisitorControls
+                clips={p.clips}
+                active={p.active}
+                playing={p.playing}
+                onSelect={p.select}
+              />
+            )}
+            {dragging && (
+              <div className="drop-overlay">
+                <Plus size={40} />
+                {p.locked
+                  ? '展示ロックを解除して追加'
+                  : 'ここにドロップして追加'}
+              </div>
+            )}
           </div>
         </section>
         <aside className="playlist">
           <div className="playlist-heading">
-            <div>
-              <p className="eyebrow">YOUR COLLECTION</p>
-              <h2>
-                プレイリスト{' '}
-                <span>{String(p.clips.length).padStart(2, '0')}</span>
-              </h2>
-            </div>
+            <h2>
+              PLAYLIST <span>{String(p.clips.length).padStart(2, '0')}</span>
+            </h2>
             <Button
               className="add-square"
               variant="outline"
@@ -301,10 +254,10 @@ export default function Home() {
           </div>
           <div className="playlist-toolbar">
             <span>
-              <InfinityIcon size={14} /> 全件ループ
+              <InfinityIcon size={13} /> LOOP
             </span>
             <button disabled={p.locked} onClick={() => folder.current?.click()}>
-              <FolderOpen size={14} /> フォルダーを選ぶ
+              <FolderOpen size={14} /> フォルダー
             </button>
           </div>
           <div className="clip-list">
@@ -379,18 +332,10 @@ export default function Home() {
               </div>
             )}
           </div>
-          <Button
-            className="playlist-add"
-            variant="outline"
-            onClick={() => input.current?.click()}
-            disabled={p.locked}
-          >
-            <Plus size={15} /> 動画を追加する
-          </Button>
           <div className="exhibit-setting">
             <div>
               <strong>展示ロック</strong>
-              <small>動画の追加・削除・並び替えを固定</small>
+              <small>編集を固定</small>
             </div>
             <Switch
               checked={p.locked}
@@ -398,35 +343,15 @@ export default function Home() {
               aria-label="展示ロック"
             />
           </div>
-          <p className="playlist-note">
-            <ShieldCheck size={13} /> 動画はこの端末内で再生されます。
-            <br />
-            ファイルがアップロードされることはありません。
-          </p>
+          <output className="operator-notice" aria-live="polite">
+            <Check size={12} />
+            <span>
+              {p.notice}
+              <small>{p.wakeState}</small>
+            </span>
+          </output>
         </aside>
       </div>
-      <div className="session-help">
-        <span>
-          <span className="keyboard-key">Space</span> 再生 / 停止{' '}
-          <span className="keyboard-key">← →</span> 前 / 次{' '}
-          <span className="keyboard-key">F</span> 全画面{' '}
-          <span className="keyboard-key">M</span> 消音
-        </span>
-        <span>{p.wakeState}</span>
-      </div>
-      <p className="file-help">
-        * 対応形式はブラウザーによって異なります。MP4（H.264）/ WebM
-        推奨。ページを再読み込みした場合は、動画を選び直してください。
-      </p>
-      <footer>
-        <output aria-live="polite">
-          <Check size={13} />
-          {p.notice}
-        </output>
-        <span>
-          AIR LOOP <i /> MADE FOR THE MOMENT
-        </span>
-      </footer>
       <input
         ref={input}
         type="file"

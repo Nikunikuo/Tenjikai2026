@@ -5,7 +5,7 @@ import {
   useRef,
   useState,
   type MouseEvent,
-  type PointerEvent,
+  type PointerEvent as ReactPointerEvent,
 } from 'react';
 import {
   ArrowLeft,
@@ -84,21 +84,31 @@ export function VisitorControls({ clips, active, playing, onSelect }: Props) {
     clearTimeout(idle.current);
     idle.current = setTimeout(() => close(), VISITOR_IDLE_MS);
   };
-  const pulse = (event: MouseEvent<HTMLButtonElement>, text = '') => {
+  const addRipple = (clientX: number, clientY: number) => {
     const bounds = layer.current?.getBoundingClientRect();
     if (!bounds) return;
-    const target = event.currentTarget.getBoundingClientRect();
-    const x =
-      event.detail === 0 ? target.left + target.width / 2 : event.clientX;
-    const y =
-      event.detail === 0 ? target.top + target.height / 2 : event.clientY;
-    setRipples((old) => [
-      ...old.slice(-4),
-      { id: ++serial.current, x: x - bounds.left, y: y - bounds.top },
-    ]);
+    const reduced = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
+    const ripple = {
+      id: ++serial.current,
+      x: clientX - bounds.left,
+      y: clientY - bounds.top,
+    };
+    setRipples((old) => (reduced ? [ripple] : [...old.slice(-2), ripple]));
     clearTimeout(rippleTimer.current);
-    // Timeout also clears nodes when reduced-motion disables CSS animations.
-    rippleTimer.current = setTimeout(() => setRipples([]), 800);
+    rippleTimer.current = setTimeout(
+      () => setRipples([]),
+      reduced ? 650 : 1900,
+    );
+  };
+  const pulse = (event: MouseEvent<HTMLButtonElement>, text = '') => {
+    // Pointer taps are handled once at the whole surface. Keyboard activation
+    // has no pointer coordinates, so its ripple starts at the button centre.
+    if (event.detail === 0) {
+      const target = event.currentTarget.getBoundingClientRect();
+      addRipple(target.left + target.width / 2, target.top + target.height / 2);
+    }
     if (text) {
       setFeedback(text);
       clearTimeout(feedbackTimer.current);
@@ -123,7 +133,7 @@ export function VisitorControls({ clips, active, playing, onSelect }: Props) {
     onSelect(clip.id);
     close();
   };
-  const pointerDown = (event: PointerEvent<HTMLDivElement>) => {
+  const pointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary || event.button !== 0) return;
     if (!gesture.current.start(event.pointerId, event.clientX, event.clientY))
       return;
@@ -135,7 +145,7 @@ export function VisitorControls({ clips, active, playing, onSelect }: Props) {
     capture.current = { target, id: event.pointerId };
     touch();
   };
-  const pointerMove = (event: PointerEvent<HTMLDivElement>) => {
+  const pointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
     const move = gesture.current.move(
       event.pointerId,
       event.clientX,
@@ -149,7 +159,7 @@ export function VisitorControls({ clips, active, playing, onSelect }: Props) {
       touch();
     }
   };
-  const pointerUp = (event: PointerEvent<HTMLDivElement>) => {
+  const pointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
     const result = gesture.current.end(
       event.pointerId,
       event.clientX,
@@ -169,6 +179,46 @@ export function VisitorControls({ clips, active, playing, onSelect }: Props) {
       entry.current?.focus({ preventScroll: true });
     }
   }, [open]);
+  useEffect(() => {
+    const node = layer.current;
+    if (!node) return;
+    let press: { id: number; x: number; y: number; moved: boolean } | null =
+      null;
+    const down = (event: PointerEvent) => {
+      if (!event.isPrimary || event.button !== 0) return;
+      press = {
+        id: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        moved: false,
+      };
+    };
+    const move = (event: PointerEvent) => {
+      if (!press || press.id !== event.pointerId) return;
+      // Leave room for aerial-sensor jitter; an intentional browse starts at 48px.
+      press.moved ||=
+        Math.hypot(event.clientX - press.x, event.clientY - press.y) > 24;
+    };
+    const up = (event: PointerEvent) => {
+      if (!press || press.id !== event.pointerId) return;
+      const tapped = !press.moved;
+      press = null;
+      if (tapped) addRipple(event.clientX, event.clientY);
+    };
+    const cancel = (event: PointerEvent) => {
+      if (press?.id === event.pointerId) press = null;
+    };
+    node.addEventListener('pointerdown', down, true);
+    node.addEventListener('pointermove', move, true);
+    node.addEventListener('pointerup', up, true);
+    node.addEventListener('pointercancel', cancel, true);
+    return () => {
+      node.removeEventListener('pointerdown', down, true);
+      node.removeEventListener('pointermove', move, true);
+      node.removeEventListener('pointerup', up, true);
+      node.removeEventListener('pointercancel', cancel, true);
+    };
+  }, []);
   useEffect(
     () => () => {
       clearTimeout(idle.current);
@@ -369,10 +419,19 @@ export function VisitorControls({ clips, active, playing, onSelect }: Props) {
             key={ripple.id}
             className="touch-ripple"
             style={{ left: ripple.x, top: ripple.y }}
-            onAnimationEnd={() =>
-              setRipples((old) => old.filter((item) => item.id !== ripple.id))
-            }
-          />
+            onAnimationEnd={(event) => {
+              if (event.currentTarget === event.target)
+                setRipples((old) =>
+                  old.filter((item) => item.id !== ripple.id),
+                );
+            }}
+          >
+            <i className="ripple-bloom" />
+            <i className="ripple-ring ripple-ring-one" />
+            <i className="ripple-ring ripple-ring-two" />
+            <i className="ripple-ring ripple-ring-three" />
+            <i className="ripple-impact" />
+          </span>
         ))}
       </div>
       <output
